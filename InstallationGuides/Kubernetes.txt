@@ -1,37 +1,54 @@
-apt-get update && apt-get install -y curl apt-transport-https docker.io
-curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+apt-get update && apt-get install -y curl apt-transport-https docker.io           #Dependencies
+curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -     #Adding the URL of KUBE
 
 echo "deb http://apt.kubernetes.io/ kubernetes-xenial main" >/etc/apt/sources.list.d/kubernetes.list
 apt-get update
-apt-get install -y kubelet kubeadm kubectl
-kubeadm init                                              #kubeadm init --ignore-preflight-errors=all
-mkdir -p $HOME/.kube
+apt-get install -y kubelet kubeadm kubectl                                        #1.Manage the KUBE clusters 2.manage the diff componenets
+kubeadm init                                                                      #kubeadm init --ignore-preflight-errors=all(instalation of KUBE core software), download some docker  imagaes 
+mkdir -p $HOME/.kube                                                              #The below 3 cmd will be prompted at the end of the kubeadm init cmd
 sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
-export kubever=$(kubectl version | base64 | tr -d '\n')
+export kubever=$(kubectl version | base64 | tr -d '\n')                           #Some network setup, to make the node in ready state
 kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$kubever"
 
-kubectl get node
-kubectl get pods --all-namespaces
+kubectl get node                                                                  #Get info about your node
+kubectl get pods --all-namespaces                                                 #Below cmds are to host an application.
 kubectl taint nodes --all node-role.kubernetes.io/master-
-kubectl get pods --all-namespaces
+kubectl get pods --all-namespaces                                                 #pod=containers basic component of KUBE, internal services of KUBE
 kubectl get node
 history
 
-
+# Get commands with basic output
+kubectl get services                          # List all services in the namespace
+kubectl get pods --all-namespaces             # List all pods in all namespaces
+kubectl get pods -o wide                      # List all pods in the namespace, with more details
+kubectl get deployment my-dep                 # List a particular deployment
+kubectl get pods --include-uninitialized      # List all pods in the namespace, including uninitialized ones
 
 kubectl create namespace application
 kubectl get pods --all-namespaces
 
+#Creating a pod out of the following image, https://hub.docker.com/r/jocatalin/kubernetes-bootcamp
+#Like a docker run command to create a container out of an image, in the KUBE world we are creating a pod out of image kubernetes-bootcamp, docker.io/ is just a prefix not neccessary. 
 kubectl run kubernetes-bootcamp --image=docker.io/jocatalin/kubernetes-bootcamp:v1 --port=8080
 
+#
 kubectl get services
-
+kubectl get deployment
+#
 kubectl expose deployment/kubernetes-bootcamp --port=8080 --target-port=8080 --type=NodePort
 
+#Get IP sddress of a pod
+kubectl describe pod kubernetes-bootcamp-6c5cfd894b-xm9l2
+#curl <IP>:8080
 kubectl describe services kubernetes-bootcamp
 
+#List pods
+kubectl get pods
+#Enter into a pod
+kubectl exec -it kubernetes-bootcamp-6c5cfd894b-xm9l2 bash
 kubectl exec -ti $POD_NAME curl localhost:8080
+
 
 kubectl scale deployments/kubernetes-bootcamp --replicas=2
 
